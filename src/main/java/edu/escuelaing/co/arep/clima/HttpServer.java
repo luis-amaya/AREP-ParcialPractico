@@ -74,13 +74,12 @@ public class HttpServer {
                 break;
             }
         }
-
-        String uriContentType = "";
-        String uri = "";
-        uriContentType = request.get(0).split(" ")[1];
-        URI resource = new URI(uriContentType);
-        uri = resource.getPath().split("/")[1];
         try {
+            String uriContentType = "";
+            String uri = "";
+            uriContentType = request.get(0).split(" ")[1];
+            URI resource = new URI(uriContentType);
+            uri = resource.getPath().split("/")[1];
             outputLine = getComponentResource(uri, resource);
             out.println(outputLine);
         } catch (Exception e) {
