@@ -149,8 +149,10 @@ public class HttpServer {
 
     static int getPort() {
         if (System.getenv("PORT") != null) {
+            System.out.println(Integer.parseInt(System.getenv("PORT")));
             return Integer.parseInt(System.getenv("PORT"));
         }
+
         return 35001; // returns default port if heroku-port isn't set (i.e. on localhost)
     }
 
