@@ -1,10 +1,13 @@
 package edu.escuelaing.co.arep.clima;
 
 import java.net.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.json.JSONObject;
 
 import java.io.*;
 
@@ -78,9 +81,10 @@ public class HttpServer {
         URI resource = new URI(uriContentType);
         uri = resource.getPath().split("/")[1];
         try {
-            outputLine = getComponentResource(uri);
+            outputLine = getComponentResource(uri, resource);
             out.println(outputLine);
         } catch (Exception e) {
+            System.out.println(e);
             outputLine = default404HTMLResponse();
             out.println(outputLine);
         }
@@ -90,18 +94,39 @@ public class HttpServer {
         clientSocket.close();
     }
 
-    private String getComponentResource(String uri) throws IOException {
+    private String getComponentResource(String uri, URI urir) throws IOException {
         if (uri.contains("clima")) {
             return defaultHttpMessage();
         } else if (uri.contains("consulta")) {
-            return computeContentComponentResponse(uri);
+            return computeContentComponentResponse(uri, urir);
         } else {
             return default404HTMLResponse();
         }
     }
 
-    private String computeContentComponentResponse(String uri) {
-        return null;
+    private static String readAll(Reader rd) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int cp;
+        while ((cp = rd.read()) != -1) {
+            sb.append((char) cp);
+        }
+        return sb.toString();
+    }
+
+    private String computeContentComponentResponse(String uri, URI urir) throws MalformedURLException, IOException {
+        String ciudad = urir.getQuery().split("=")[1];
+        String url = getURL(ciudad);
+        InputStream is = new URL(url).openStream();
+        try {
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+            String jsonText = readAll(rd);
+            JSONObject json = new JSONObject(jsonText);
+            String outputLine = "HTTP/1.1 200 OK\r\n" + "Content-Type:application/json\r\n" + "\r\n" + json;
+            return outputLine;
+        } finally {
+            is.close();
+        }
+
     }
 
     private String default404HTMLResponse() {
@@ -114,10 +139,12 @@ public class HttpServer {
 
     private String defaultHttpMessage() {
         String outputLine = "HTTP/1.1 200 ok\r\n" + "Content-Type: text/html\r\n" + "\r\n" + "<!DOCTYPE html>"
-                + " <html>" + "     <head>" + "         <title> TODO supply a title </title>"
+                + " <html>" + "     <head>" + "         <title> Wheather Page </title>"
                 + "         <meta charset=\"UTF-8\""
                 + "         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"" + "     </head>"
-                + "     <body>" + "         <div><h1>The Weather</h1></div>" + "</html>";
+                + "     <body>" + "         <div><h1>The Weather</h1></div>"
+                + "<p>Esta página es para consultar el clima en una ciudad. Ingresar en la barra la ciudad a buscar. De esta manera consulta?lugar={ciudad o lugar}. No incluir los corchetes<p>"
+                + "</html>";
         return outputLine;
     }
 
